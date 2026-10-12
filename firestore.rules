@@ -10,7 +10,7 @@ service cloud.firestore {
    return d.keys().hasAll(['displayName','city','category','subcategory','visitFee','online','approved','updatedAt'])
     && d.keys().hasOnly(['displayName','city','category','subcategory','visitFee','online','approved','updatedAt'])
     && nameOK(d.displayName) && cityOK(d.city) && subOK(d.subcategory)
-    && d.category is int && d.category >= 0 && d.category < 12
+    && d.category is int && d.category >= 0 && d.category < 24
     && feeOK(d.visitFee) && d.online is bool && d.approved is bool;
   }
   match /accounts/{uid} {
