@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hexora-services.github.io/hexora-web/sitemap.xml
