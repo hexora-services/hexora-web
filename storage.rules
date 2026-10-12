@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /workerPhotos/{workerUid}/{imageName} {
+      // Public portfolio images: never upload addresses, identification or other private photos.
+      allow read: if true;
+      // Exactly one avatar and five gallery slots, for the FREE plan.
+      allow create, update: if request.auth != null
+        && request.auth.uid == workerUid
+        && imageName.matches('^(avatar|work-[1-5])[.]jpg$')
+        && request.resource.size <= 4 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg';
+      allow delete: if request.auth != null && request.auth.uid == workerUid;
+    }
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}
