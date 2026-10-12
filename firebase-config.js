@@ -1,4 +1,5 @@
-
+// HEXORA Firebase Web app configuration.
+// This client config is public. Protect database content using Firestore Security Rules.
 export const firebaseConfig = {
   apiKey: "AIzaSyBOyKTqGNI84aN6hizhV_zaIzsf5GEqwqg",
   authDomain: "hexora-e68bb.firebaseapp.com",
@@ -7,5 +8,5 @@ export const firebaseConfig = {
   messagingSenderId: "970707479478",
   appId: "1:970707479478:web:3bcc1eb06c436447c52f17"
 };
-
-export const configured = true;
+export const configured = Boolean(firebaseConfig.apiKey && firebaseConfig.appId &&
+ !Object.values(firebaseConfig).some(x => String(x).includes('PASTE_')));

@@ -6,7 +6,7 @@
 <meta content="#101f34" name="theme-color"/>
 <meta content="noindex,nofollow" name="robots"/>
 <meta content="HEXORA: აირჩიე მომსახურების კატეგორია და ქვეკატეგორია, ნახე ხელოსნები ვიზიტის ფასებით და გააკეთე სატესტო გამოძახება." name="description"/>
-<title>HEXORA — მომსახურების კატეგორიები და ხელოსნების გამოძახება (დემო v4)</title>
+<title>HEXORA — სერვისები და დამტკიცებული ხელოსნები (V5)</title>
 <link href="favicon.svg" rel="icon" type="image/svg+xml"/>
 <style>
 :root{--navy:#101f34;--navy2:#19314c;--orange:#fa793e;--teal:#0b8f7d;--ink:#1a2b40;--muted:#738195;--bg:#f5f7fa;--card:#fff;--line:#e2e9ee;--shadow:0 12px 35px #10243a10;--radius:18px}
@@ -100,9 +100,18 @@
  .demo{display:none}
 }
 </style>
+<style>
+.verified-status{border:1px solid #d5e8e5;background:#f2fbf8;border-radius:14px;padding:16px 18px;color:#215d54;margin:0 0 16px;font-weight:720;line-height:1.6}
+.verified-status.error{border-color:#f2cfbb;background:#fff6ed;color:#a1542c}
+.demo-catalog{margin-top:34px;border-top:1px solid #e0e7ec;padding:14px 0;color:#314d60}
+.demo-catalog>summary{cursor:pointer;padding:12px 15px;border-radius:12px;background:#f3f5f8;font-weight:760;list-style-position:inside}
+.demo-catalog p{margin:14px 0}
+.demo-catalog .worker-grid{margin-top:14px}
+.live-note{border:1px solid #e9eef2;border-radius:10px;padding:9px;background:#f7f9fa;color:#637488;font-size:12px}
+</style>
 </head>
 <body>
-<header class="top"><div class="container topin"><div class="brand"><span aria-hidden="true" class="mark">⬡</span><div>HEXORA<small>ყველა სერვისი ერთი გამოძახებით</small></div></div><nav aria-label="მთავარი ნავიგაცია" class="nav"><button class="active" data-tab="client">⌂ მომსახურებები</button><button data-tab="orders">📋 შეკვეთები</button><button data-tab="master">👷 ხელოსანი</button><button data-tab="admin">⚙️ ადმინისტრაცია</button></nav><a class="account-link" href="account.html" aria-label="ანგარიშის შექმნა ან შესვლა">👤 შესვლა / რეგისტრაცია</a><span class="demo">V4</span></div></header>
+<header class="top"><div class="container topin"><div class="brand"><span aria-hidden="true" class="mark">⬡</span><div>HEXORA<small>ყველა სერვისი ერთი გამოძახებით</small></div></div><nav aria-label="მთავარი ნავიგაცია" class="nav"><button class="active" data-tab="client">⌂ მომსახურებები</button><button data-tab="orders">📋 შეკვეთები</button><button data-tab="master">👷 ხელოსანი</button><button data-tab="admin">🧪 დემო-ადმინი</button></nav><a class="account-link" href="account.html" aria-label="ანგარიშის შექმნა ან შესვლა" id="accountLink">👤 შესვლა / რეგისტრაცია</a><span class="demo">V4</span></div></header>
 
 <main class="container wrap">
 <section class="section visible" id="client"><input id="query" type="hidden" value=""/><div class="catalog-head"><span class="catalog-kicker">HEXORA • საქართველოს ყველა ქალაქი</span><span class="catalog-count">12 კატეგორია</span></div><div class="section-title"><div><h2>რას ეძებ დღეს?</h2><p>აირჩიე კატეგორია, შემდეგ მომსახურება და ნახე შესაბამისი ხელოსნები.</p></div></div><div class="category-grid" id="categories"></div></section>
@@ -114,7 +123,9 @@
 <section class="section" id="results">
 <div class="breadcrumb"><button id="backResults" type="button">← უკან</button><span>/</span><strong id="resultCrumb">ხელოსნები</strong></div>
 <div class="page-intro"><span class="small muted">მომსახურების არჩევა • ნაბიჯი 3</span><h2 id="resultTitle">ხელოსნების სია</h2><p>აირჩიე ქალაქი, შეადარე ხელოსნების ვიზიტის ფასები და გამოიძახე შესაფერისი სპეციალისტი.</p></div>
-<div class="section-title"><div><h2>ხელმისაწვდომი ხელოსნები</h2><p id="resultsCaption">სატესტო პროფილები — რეალური სპეციალისტები ჯერ არ არიან რეგისტრირებული</p></div><div class="toolbar"><select aria-label="ქალაქის არჩევა" id="city"></select><select id="availability"><option value="all">ყველა ხელოსანი</option><option value="online">მხოლოდ ონლაინ</option></select><select id="sort"><option value="default">რეკომენდებული</option><option value="price">ვიზიტის ფასით</option></select></div></div><div class="worker-grid" id="workers"></div></section>
+<div class="section-title"><div><h2>ხელმისაწვდომი ხელოსნები</h2><p id="resultsCaption">Firebase-ში დამტკიცებული ხელოსნების პროფილები</p></div><div class="toolbar"><select aria-label="ქალაქის არჩევა" id="city"></select><select id="availability"><option value="all">ყველა ხელოსანი</option><option value="online">მხოლოდ ონლაინ</option></select><select id="sort"><option value="default">რეკომენდებული</option><option value="price">ვიზიტის ფასით</option></select></div></div><div id="liveProfilesStatus" class="verified-status" role="status" aria-live="polite">🔄 დამტკიცებული ხელოსნების ძიება...</div>
+<div class="worker-grid" id="liveWorkers"></div>
+<details class="demo-catalog" id="demoWorkersBox"><summary>🧪 სატესტო ხელოსნების ნახვა — დემო</summary><p class="small muted">ეს პროფილები მხოლოდ აპლიკაციის გამოსაცდელადაა. ისინი ნამდვილი ხელოსნები არ არიან; აქ შექმნილი გამოძახებები მხოლოდ ამ ბრაუზერში ინახება.</p><div class="worker-grid" id="workers"></div></details></section>
 <section class="section" id="orders"><div class="section-title"><div><h2>ჩემი გამოძახებები</h2><p>დემო შეკვეთების ისტორია მომხმარებლის მხრიდან</p></div><button class="btn btn-main" id="newOrder">+ ახალი გამოძახება</button></div><div class="list" id="customerOrders"></div></section>
 <section class="section" id="master"><div class="section-title"><div><h2>ხელოსნის სამუშაო პანელი</h2><p>მუშაობის ჩართვა, შეკვეთების მიღება და ვიზიტების მართვა</p></div></div><div class="cols"><div class="panel stack"><h3 class="subhead">შენი სატესტო პროფილი</h3><label class="field">აირჩიე ხელოსნის პროფილი<select id="masterSelect"></select></label><label class="switch"><input id="onlineToggle" type="checkbox"/> 🟢 მზად ვარ გამოძახებებისთვის</label><div class="note" id="masterInfo"></div>
 <div class="price-editor"><strong>💳 შენი ვიზიტის საფასური</strong>
@@ -189,7 +200,7 @@ $('backHomeSub').onclick=()=>tab('client');
 $('backResults').onclick=()=>selectedCategory===null?tab('client'):tab('subcategories');
 $('city').onchange=()=>{if(activeTab==='results')renderWorkers()};$('availability').onchange=renderWorkers;$('sort').onchange=renderWorkers;
 function averages(workerId,kind){const r=db.orders.filter(o=>o.workerId===workerId&&o.ratings?.[kind]);if(!r.length)return null;return (r.reduce((a,o)=>a+o.ratings[kind].stars,0)/r.length).toFixed(1)}
-function renderWorkers(){let ws=db.workers.filter(w=>(selectedCategory===null||w.category===selectedCategory)&&(selectedSubcategory===null||w.subcategory===selectedSubcategory)&&($('city').value==='ყველა ქალაქი'||w.city===$('city').value)&&($('availability').value!=='online'||w.online));let q=$('query').value.trim().toLocaleLowerCase('ka');if(q)ws=ws.filter(w=>(`${w.name} ${w.city} ${cat(w.category)} ${categories[w.category]?.[2]} ${w.subcategory||''}`).toLocaleLowerCase('ka').includes(q));if($('sort').value==='price')ws.sort((a,b)=>a.fee-b.fee);else ws.sort((a,b)=>Number(b.online)-Number(a.online));$('resultsCaption').textContent=`ნაპოვნია ${ws.length} სატესტო პროფილი • რეალური სპეციალისტები ჯერ არ არიან რეგისტრირებული`; $('workers').innerHTML=ws.length?ws.map(w=>{const rate=averages(w.id,'worker');return `<article class="worker"><div class="worker-head"><div class="avatar">${categories[w.category]?.[0]||'🛠'}</div><div style="flex:1"><h3>${esc(w.name)}</h3><div class="muted small">📍 ${esc(w.city)}</div></div><span class="status ${w.online?'':'off'}">● ${w.online?'ონლაინ':'ოფლაინ'}</span></div><div class="worker-tags"><span class="chip">${esc(w.subcategory||cat(w.category))}</span><span class="chip">${rate?'⭐ '+rate:'☆ ჯერ არ შეფასებულა'}</span></div><p class="small muted">ვიზიტის ფასი განსაზღვრულია ხელოსნის მიერ. რეალური გადახდები ჯერ არ მუშაობს.</p><div class="worker-foot"><div class="price">${money(w.fee)} <small>/ ვიზიტი</small></div><button data-book="${esc(w.id)}" class="btn btn-main btn-sm" ${w.online?'':'disabled'}>გამოძახება →</button></div></article>`}).join(''):'<div class="empty" style="grid-column:1/-1"><div class="ico">🔎</div>ამ ფილტრებით ხელოსანი ვერ მოიძებნა.<br><span class="small">დემოში მხოლოდ რამდენიმე პროფილია. რეალურ აპში ქალაქების დამატება რეგისტრაციით მოხდება.</span></div>';document.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>openBooking(b.dataset.book))}
+function renderWorkers(){window.dispatchEvent(new CustomEvent('hexora:filters',{detail:{category:selectedCategory,subcategory:selectedSubcategory,city:$('city').value,onlineOnly:$('availability').value==='online',sort:$('sort').value}}));let ws=db.workers.filter(w=>(selectedCategory===null||w.category===selectedCategory)&&(selectedSubcategory===null||w.subcategory===selectedSubcategory)&&($('city').value==='ყველა ქალაქი'||w.city===$('city').value)&&($('availability').value!=='online'||w.online));let q=$('query').value.trim().toLocaleLowerCase('ka');if(q)ws=ws.filter(w=>(`${w.name} ${w.city} ${cat(w.category)} ${categories[w.category]?.[2]} ${w.subcategory||''}`).toLocaleLowerCase('ka').includes(q));if($('sort').value==='price')ws.sort((a,b)=>a.fee-b.fee);else ws.sort((a,b)=>Number(b.online)-Number(a.online));$('resultsCaption').textContent='დამტკიცებული ხელოსნები • ფასს თავად ადგენს სპეციალისტი'; $('workers').innerHTML=ws.length?ws.map(w=>{const rate=averages(w.id,'worker');return `<article class="worker"><div class="worker-head"><div class="avatar">${categories[w.category]?.[0]||'🛠'}</div><div style="flex:1"><h3>${esc(w.name)}</h3><div class="muted small">📍 ${esc(w.city)}</div></div><span class="status ${w.online?'':'off'}">● ${w.online?'ონლაინ':'ოფლაინ'}</span></div><div class="worker-tags"><span class="chip">${esc(w.subcategory||cat(w.category))}</span><span class="chip">${rate?'⭐ '+rate:'☆ ჯერ არ შეფასებულა'}</span></div><p class="small muted">ვიზიტის ფასი განსაზღვრულია ხელოსნის მიერ. რეალური გადახდები ჯერ არ მუშაობს.</p><div class="worker-foot"><div class="price">${money(w.fee)} <small>/ ვიზიტი</small></div><button data-book="${esc(w.id)}" class="btn btn-main btn-sm" ${w.online?'':'disabled'}>გამოძახება →</button></div></article>`}).join(''):'<div class="empty" style="grid-column:1/-1"><div class="ico">🔎</div>ამ ფილტრებით ხელოსანი ვერ მოიძებნა.<br><span class="small">დემოში მხოლოდ რამდენიმე პროფილია. რეალურ აპში ქალაქების დამატება რეგისტრაციით მოხდება.</span></div>';document.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>openBooking(b.dataset.book))}
 function openBooking(id){const w=db.workers.find(w=>w.id===id);if(!w||!w.online)return toast('ხელოსანი ამჟამად მიუწვდომელია');currentBooking=id;$('selectedWorker').textContent=`${w.name} • ${w.city} • ${w.subcategory||cat(w.category)}`;$('bookingPrice').innerHTML=`<span>ხელოსნის მიერ დაწესებული ვიზიტის ფასი</span><strong>${money(w.fee)}</strong>`;$('address').value='';$('description').value='';$('agree').checked=false;$('bookingModal').classList.add('open')}
 $('closeBooking').onclick=()=>$('bookingModal').classList.remove('open');$('bookingModal').addEventListener('click',e=>{if(e.target.id==='bookingModal')$('bookingModal').classList.remove('open')});
 $('confirmBooking').onclick=()=>{const w=db.workers.find(w=>w.id===currentBooking);if(!w)return;const name=$('customerName').value.trim(),addr=$('address').value.trim();if(!name||!addr||!$('agree').checked)return toast('შეავსე სახელი, მისამართი და დაადასტურე ვიზიტის ფასი');const o={id:'ord'+Date.now(),workerId:w.id,subcategory:w.subcategory,customer:name,address:addr,description:$('description').value.trim(),fee:w.fee,status:'requested',date:Date.now(),ratings:{},flags:{},events:[['გამოძახება შექმნილია',Date.now()]]};db.orders.unshift(o);save();$('bookingModal').classList.remove('open');toast('დემო გამოძახება შეიქმნა — თანხა არ ჩამოგეჭრა');tab('orders')};
@@ -245,4 +256,35 @@ else if(['#orders','#master','#admin'].includes(startHash)){tab(startHash.slice(
 history.replaceState({screen:activeTab,cat:selectedCategory,sub:selectedSubcategory},'',location.href);
 })();
 </script>
+
+<!-- ანგარიშის სტატუსი მთავარ გვერდზეც აისახება; გამოძახებები კვლავ დემოა. -->
+<script type="module">
+import { firebaseConfig, configured } from "./firebase-config.js";
+const accountLink = document.getElementById("accountLink");
+if (configured && accountLink) {
+  try {
+    const [{ initializeApp, getApps, getApp }, { getAuth, onAuthStateChanged }] =
+      await Promise.all([
+        import("https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js")
+      ]);
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    onAuthStateChanged(getAuth(app), current => {
+      if (current) {
+        const firstName = (current.displayName || "").trim().split(/\s+/)[0];
+        accountLink.textContent = "👤 " + (firstName || "ჩემი ანგარიში");
+        accountLink.setAttribute("aria-label", "ჩემი HEXORA ანგარიში");
+        accountLink.title = current.email || "ჩემი HEXORA ანგარიში";
+      } else {
+        accountLink.textContent = "👤 შესვლა / რეგისტრაცია";
+        accountLink.setAttribute("aria-label", "ანგარიშის შექმნა ან შესვლა");
+        accountLink.removeAttribute("title");
+      }
+    });
+  } catch (error) {
+    console.warn("HEXORA: ანგარიშის სტატუსი ვერ ჩაიტვირთა.", error);
+  }
+}
+</script>
+<script type="module" src="real-workers.js"></script>
 </body></html>
