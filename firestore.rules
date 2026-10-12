@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function self(uid) { return request.auth != null && request.auth.uid == uid; }
+  function nameOK(v) {return v is string && v.size() >= 2 && v.size() <= 60;}
+  function cityOK(v) {return v is string && v.size() >= 2 && v.size() <= 70;}
+  function subOK(v) {return v is string && v.size() >= 2 && v.size() <= 90;}
+  function feeOK(v) {return v is int && v >= 1 && v <= 2000;}
+  function validWorker(d) {
+   return d.keys().hasAll(['displayName','city','category','subcategory','visitFee','online','approved','updatedAt'])
+    && d.keys().hasOnly(['displayName','city','category','subcategory','visitFee','online','approved','updatedAt'])
+    && nameOK(d.displayName) && cityOK(d.city) && subOK(d.subcategory)
+    && d.category is int && d.category >= 0 && d.category < 12
+    && feeOK(d.visitFee) && d.online is bool && d.approved is bool;
+  }
+  match /accounts/{uid} {
+    allow get: if self(uid);
+    allow list: if false;
+    allow create: if self(uid)
+     && request.resource.data.keys().hasAll(['displayName','role','createdAt'])
+     && request.resource.data.keys().hasOnly(['displayName','role','createdAt'])
+     && nameOK(request.resource.data.displayName)
+     && request.resource.data.role in ['customer','worker']
+     && request.resource.data.createdAt == request.time;
+    allow update, delete: if false;
+  }
+  match /workerProfiles/{uid} {
+    allow get: if self(uid) || resource.data.approved == true;
+    allow list: if resource.data.approved == true;
+    allow create: if self(uid)
+     && exists(/databases/$(database)/documents/accounts/$(uid))
+     && get(/databases/$(database)/documents/accounts/$(uid)).data.role == 'worker'
+     && validWorker(request.resource.data)
+     && request.resource.data.approved == false
+     && request.resource.data.online == false
+     && request.resource.data.updatedAt == request.time;
+    allow update: if self(uid)
+     && validWorker(request.resource.data)
+     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+       ['displayName','city','category','subcategory','visitFee','online','updatedAt'])
+     && request.resource.data.approved == resource.data.approved
+     && request.resource.data.updatedAt == request.time;
+    allow delete: if false;
+  }
+  match /{path=**} { allow read, write: if false; }
+ }
+}

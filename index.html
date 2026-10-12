@@ -6,7 +6,7 @@
 <meta content="#101f34" name="theme-color"/>
 <meta content="noindex,nofollow" name="robots"/>
 <meta content="HEXORA: აირჩიე მომსახურების კატეგორია და ქვეკატეგორია, ნახე ხელოსნები ვიზიტის ფასებით და გააკეთე სატესტო გამოძახება." name="description"/>
-<title>HEXORA — მომსახურების კატეგორიები და ხელოსნების გამოძახება (დემო v3)</title>
+<title>HEXORA — მომსახურების კატეგორიები და ხელოსნების გამოძახება (დემო v4)</title>
 <link href="favicon.svg" rel="icon" type="image/svg+xml"/>
 <style>
 :root{--navy:#101f34;--navy2:#19314c;--orange:#fa793e;--teal:#0b8f7d;--ink:#1a2b40;--muted:#738195;--bg:#f5f7fa;--card:#fff;--line:#e2e9ee;--shadow:0 12px 35px #10243a10;--radius:18px}
@@ -32,7 +32,6 @@
 
 /* HEXORA v3 — Category-first three-screen service directory */
 .wrap{padding-top:22px}
-.nav button{display:inline-flex;align-items:center;gap:6px;justify-content:center}.nav-ico{font-size:16px;line-height:1}.nav-label{white-space:nowrap}
 .catalog-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 1px 0;color:#547086;font-size:12px;font-weight:750}
 .catalog-kicker{color:#0c786b}.catalog-count{background:#e9f4f1;color:#2b756a;border-radius:30px;padding:5px 11px}
 #client>.section-title{margin-top:11px;margin-bottom:20px}
@@ -67,7 +66,7 @@
   .top .mark{width:41px;height:41px}
   .demo{display:none}
   .nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;overflow:visible;padding-top:5px;border-top:1px solid #ffffff21}
-  .nav button{display:flex;flex-direction:column;gap:2px;font-size:10px;padding:7px 2px;line-height:1.2;min-height:52px;min-width:0;border-radius:9px;overflow:hidden}.nav-ico{font-size:17px}.nav-label{font-size:10px;white-space:nowrap;letter-spacing:-.03em}
+  .nav button{font-size:11px;padding:9px 3px;white-space:normal;line-height:1.35;min-height:40px;border-radius:9px}
   .wrap{padding-top:13px}
   #client>.section-title{margin:10px 0 17px}
   #client>.section-title h2{font-size:26px}
@@ -89,10 +88,21 @@
   #results .toolbar select{min-width:0;width:100%;flex:1 1 100%}
   #results .worker-grid{grid-template-columns:1fr}
 }
+
+.account-link{background:#fff;color:#172c45;border-radius:11px;padding:10px 13px;font-weight:800;font-size:12px;text-decoration:none;white-space:nowrap}
+.account-link:hover{background:#fce8df}
+@media(max-width:640px){
+ .topin{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px;padding:11px 0}
+ .brand{grid-column:1;grid-row:1;min-width:0;font-size:19px}
+ .brand small{font-size:9px}
+ .account-link{grid-column:2;grid-row:1;font-size:11px;padding:9px 10px;white-space:normal;line-height:1.25;max-width:126px;text-align:center}
+ .nav{grid-column:1/-1;grid-row:2;min-width:0}
+ .demo{display:none}
+}
 </style>
 </head>
 <body>
-<header class="top"><div class="container topin"><div class="brand"><span aria-hidden="true" class="mark">⬡</span><div>HEXORA<small>ყველა სერვისი ერთი გამოძახებით</small></div></div><nav aria-label="მთავარი ნავიგაცია" class="nav"><button class="active" data-tab="client"><span aria-hidden="true" class="nav-ico">🔎</span><span class="nav-label">კატეგორიები</span></button><button data-tab="orders"><span aria-hidden="true" class="nav-ico">📋</span><span class="nav-label">შეკვეთები</span></button><button data-tab="master"><span aria-hidden="true" class="nav-ico">👷</span><span class="nav-label">ხელოსანი</span></button><button data-tab="admin"><span aria-hidden="true" class="nav-ico">⚙️</span><span class="nav-label">ადმინი</span></button></nav><span class="demo">საცდელი ვერსია</span></div></header>
+<header class="top"><div class="container topin"><div class="brand"><span aria-hidden="true" class="mark">⬡</span><div>HEXORA<small>ყველა სერვისი ერთი გამოძახებით</small></div></div><nav aria-label="მთავარი ნავიგაცია" class="nav"><button class="active" data-tab="client">⌂ მომსახურებები</button><button data-tab="orders">📋 შეკვეთები</button><button data-tab="master">👷 ხელოსანი</button><button data-tab="admin">⚙️ ადმინისტრაცია</button></nav><a class="account-link" href="account.html" aria-label="ანგარიშის შექმნა ან შესვლა">👤 შესვლა / რეგისტრაცია</a><span class="demo">V4</span></div></header>
 
 <main class="container wrap">
 <section class="section visible" id="client"><input id="query" type="hidden" value=""/><div class="catalog-head"><span class="catalog-kicker">HEXORA • საქართველოს ყველა ქალაქი</span><span class="catalog-count">12 კატეგორია</span></div><div class="section-title"><div><h2>რას ეძებ დღეს?</h2><p>აირჩიე კატეგორია, შემდეგ მომსახურება და ნახე შესაბამისი ხელოსნები.</p></div></div><div class="category-grid" id="categories"></div></section>
@@ -113,7 +123,7 @@
 <button class="btn btn-green" id="saveMasterPrice" type="button">ფასის შენახვა</button>
 </div><hr class="divider"/><h3 class="subhead">პროფილის შექმნა (დემო)</h3><div class="note warn">გამოიყენე გამოგონილი სახელი — ამ პროტოტიპში რეალური პირადი მონაცემები არ შეიყვანო.</div><label class="field">სახელი / სათაური<input id="newMasterName" maxlength="45" placeholder="მაგ.: დემო ხელოსანი 04"/></label><label class="field">ქალაქი<select id="newMasterCity"></select></label><label class="field">მომსახურება<select id="newMasterCat"></select></label><label class="field">ქვეკატეგორია<select id="newMasterSub"></select></label><label class="field">ვიზიტის ფასი — თავად მიუთითე (₾)<input id="newMasterPrice" inputmode="decimal" max="2000" min="1" type="number" value="25"/></label><button class="btn btn-dark" id="createMaster">პროფილის დამატება</button></div><div class="panel"><h3 class="subhead">მიღებული და ახალი გამოძახებები</h3><div class="list" id="masterOrders"></div></div></div></section>
 <section class="section" id="admin"><div class="section-title"><div><h2>ადმინისტრატორის პანელი</h2><p>საჩვენებელი მონაცემები; რეალურ პროექტში ეს გვერდი დაიცვება ავტორიზაციით</p></div><button class="btn btn-danger btn-sm" id="resetDemo">დემოს განულება</button></div><div class="summary" id="stats"></div><div class="cols" style="margin-top:18px"><div class="panel"><h3 class="subhead">სადავო გამოძახებები</h3><div class="list" id="disputes"></div></div><div class="panel"><h3 class="subhead">საკომისიოს წესი</h3><div class="boxline"><span>დასრულებული ვიზიტიდან</span><strong>3 ₾</strong></div><div class="boxline" style="margin-top:9px"><span>გაუქმებული გამოძახებიდან</span><strong>0 ₾</strong></div><div class="boxline" style="margin-top:9px"><span>სადავო „არ დამხვდა“ შემთხვევიდან</span><strong>0 ₾</strong></div><p class="note warn" style="margin-top:15px">როცა ხელოსანი ადგილზე მივა და მომხმარებელი არ დახვდება, ვიზიტის ანაზღაურება მხოლოდ შემოწმებისა და წესების შესაბამისად დასტურდება. მომხმარებელს აქვს გასაჩივრების უფლება.</p><div class="mini-badges"><span>არ არის ნამდვილი გადახდის სისტემა</span><span>არ არის GPS ტრეკინგი</span><span>არ არის შესვლა/ავტორიზაცია</span></div></div></div></section>
-</main><footer class="foot"><div class="container"><span><strong style="color:white">HEXORA</strong> — კონცეპტის სამუშაო დემო</span><span>ჯერ არ არის საჯარო სერვისი • არ შეიყვანო რეალური პირადი ან საბანკო მონაცემები</span></div></footer>
+</main><footer class="foot"><div class="container"><span><strong style="color:white">HEXORA</strong> — V4 — კატალოგის დემო + Firebase რეგისტრაცია</span><span>დემოს შეკვეთები რეალური არ არის • რეალური ანგარიშები იხსნება რეგისტრაციის გვერდზე</span></div></footer>
 <div aria-labelledby="bookingTitle" aria-modal="true" class="modal" id="bookingModal" role="dialog"><div class="modal-card stack"><div class="modal-head"><h2 id="bookingTitle">ხელოსნის გამოძახება</h2><button aria-label="დახურვა" class="close" id="closeBooking">×</button></div><div class="note" id="selectedWorker"></div><label class="field">მომხმარებლის სახელი (დემო)<input id="customerName" maxlength="40" placeholder="მაგ.: დემო მომხმარებელი" value="დემო მომხმარებელი"/></label><label class="field">მისამართი (დემო)<input id="address" maxlength="100" placeholder="მაგ.: დემო მისამართი №1"/></label><label class="field">პრობლემის აღწერა<textarea id="description" maxlength="250" placeholder="აღწერე, რა მომსახურება გჭირდება"></textarea></label><div class="boxline" id="bookingPrice"></div><label class="check"><input id="agree" type="checkbox"/><span>ვადასტურებ, რომ ვიზიტი ფასიანია, ხოლო შეკეთებისა და მასალების ღირებულება საჭიროების შემთხვევაში ცალკე თანხმდება. ეს მხოლოდ დემოა — თანხა არ ჩამომეჭრება.</span></label><button class="btn btn-main" id="confirmBooking">გამოძახების გაგზავნა</button></div></div>
 <div aria-modal="true" class="modal" id="ratingModal" role="dialog"><div class="modal-card stack"><div class="modal-head"><h2 id="ratingTitle">შეფასება</h2><button aria-label="დახურვა" class="close" id="closeRating">×</button></div><p class="muted" id="ratingInfo" style="margin:0"></p><div class="ratings" id="stars"></div><label class="field">კომენტარი (არასავალდებულო)<textarea id="ratingComment" maxlength="250" placeholder="შეაფასე მხოლოდ პირადი გამოცდილება, შეურაცხყოფის გარეშე"></textarea></label><button class="btn btn-green" id="sendRating">შეფასების შენახვა</button></div></div>
 <div class="toast" id="toast" role="status"></div>
