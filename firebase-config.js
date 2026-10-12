@@ -1,13 +1,11 @@
-// HEXORA-ის ახალი, ცალკე Firebase პროექტის PUBLIC Web App config.
-// Firebase Console → Project settings → Your apps → Web app → Config.
-// ეს მნიშვნელობები კონფიდენციალური გასაღებები არ არის, მაგრამ Firestore Rules აუცილებელია.
+
 export const firebaseConfig = {
-  apiKey: "PASTE_FIREBASE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyBOyKTqGNI84aN6hizhV_zaIzsf5GEqwqg",
+  authDomain: "hexora-e68bb.firebaseapp.com",
+  projectId: "hexora-e68bb",
+  storageBucket: "hexora-e68bb.firebasestorage.app",
+  messagingSenderId: "970707479478",
+  appId: "1:970707479478:web:3bcc1eb06c436447c52f17"
 };
-export const configured = Boolean(firebaseConfig.apiKey && firebaseConfig.appId &&
- !Object.values(firebaseConfig).some(x => String(x).includes('PASTE_')));
+
+export const configured = true;
