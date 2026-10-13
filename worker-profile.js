@@ -3,7 +3,6 @@ const $=id=>document.getElementById(id);
 const id=new URLSearchParams(location.search).get('id')||'';
 const status=$('status');
 function showStatus(t,err=false){status.textContent=t;status.className='notice'+(err?' error':'');status.hidden=false;}
-const safeImage=v=>{try{const u=new URL(v);return u.protocol==='https:'&&u.hostname==='firebasestorage.googleapis.com'&&u.pathname.startsWith('/v0/b/')?u.href:null}catch{return null}};
 if(!/^[A-Za-z0-9_-]{20,128}$/.test(id)){showStatus('ხელოსნის პროფილის ბმული არასწორია.',true);}else if(!configured){showStatus('Firebase ჯერ არ არის დაკავშირებული.',true);}else init();
 async function init(){
 try{
@@ -27,11 +26,18 @@ try{
  $('visitFee').textContent=Number.isInteger(p.visitFee)?p.visitFee.toLocaleString('ka-GE')+' ₾':'შეთანხმებით';
  $('availability').textContent=p.online?'🟢 ონლაინ':'⚪ ოფლაინ';
  if(!p.approved){$('approval').textContent='⏳ ჯერ არ არის დამტკიცებული';$('approval').className='chip warn';$('revealPhone').disabled=true;}
- const avatar=safeImage(p.photoURL);if(avatar){const i=document.createElement('img');i.src=avatar;i.alt='ხელოსნის პროფილის ფოტო';$('avatar').replaceChildren(i);}
+ // One compressed public photo lives in workerImages, not Firebase Storage.
+ try{
+   const imageSnap=await dbSDK.getDoc(dbSDK.doc(db,'workerImages',id));
+   const url=imageSnap.exists()?imageSnap.data().dataUrl:'';
+   if(typeof url==='string' && /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(url)){
+     const i=document.createElement('img');i.src=url;i.alt='ხელოსნის ფოტო';$('avatar').replaceChildren(i);
+   }
+ }catch(e){console.warn('HEXORA photo read failed',e.code||e.message);}
  $('bio').textContent=p.bio||'ხელოსანს აღწერა ჯერ არ დაუმატებია.';
  $('experience').textContent=Number.isInteger(p.experienceYears)?'გამოცდილება: '+p.experienceYears+' წელი':'';
- const photos=(Array.isArray(p.gallery)?p.gallery:[]).map(safeImage).filter(Boolean);
- if(photos.length){for(const [i,src] of photos.entries()){const a=document.createElement('a');a.href=src;a.target='_blank';a.rel='noopener noreferrer';const el=document.createElement('img');el.src=src;el.loading='lazy';el.alt='შესრულებული სამუშაო '+(i+1);a.append(el);$('gallery').append(a);}}else{$('noGallery').hidden=false;}
+ // In beta the previous five-photo gallery is disabled; only one photo is shown above.
+ const oldGallery=$('gallery')?.closest('section');if(oldGallery)oldGallery.hidden=true;
  if(viewer && viewer.uid!==id && p.approved){void record('views',viewer.uid);}
  async function record(kind,viewerUid){
   try{const ref=dbSDK.doc(db,'workerInteractions',id,kind,viewerUid);const exists=await dbSDK.getDoc(ref);if(!exists.exists())await dbSDK.setDoc(ref,{viewerUid,createdAt:dbSDK.serverTimestamp()});}catch(e){console.warn('HEXORA სტატისტიკის ჩაწერა ვერ შესრულდა',e.code||e.message);}

@@ -73,6 +73,23 @@ service cloud.firestore {
       && request.resource.data.createdAt == request.time;
     allow update, delete: if false;
   }
+  // One small public profile photo stored as a compressed JPEG data URL.
+  // Temporary beta solution: Firestore is not a general-purpose image host.
+  function validWorkerImage(d) {
+    return d.keys().hasAll(['dataUrl','updatedAt'])
+      && d.keys().hasOnly(['dataUrl','updatedAt'])
+      && d.dataUrl is string
+      && d.dataUrl.size() <= 105000
+      && d.dataUrl.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$')
+      && d.updatedAt == request.time;
+  }
+  match /workerImages/{uid} {
+    allow get: if self(uid) || approvedWorker(uid);
+    allow list: if false;
+    allow create, update: if self(uid) && workerExists(uid)
+      && validWorkerImage(request.resource.data);
+    allow delete: if self(uid) && workerExists(uid);
+  }
   match /{path=**} { allow read, write: if false; }
  }
 }
