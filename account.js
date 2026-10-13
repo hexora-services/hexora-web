@@ -18,17 +18,119 @@ function setRole(role){selectedRole=role;document.querySelectorAll('[data-role]'
 document.querySelectorAll('[data-role]').forEach(b=>b.onclick=()=>setRole(b.dataset.role));
 function setMode(next){mode=next;clearMsg();$('modeRegister').classList.toggle('selected',mode==='register');$('modeLogin').classList.toggle('selected',mode==='login');$('registerForm').classList.toggle('hidden',mode!=='register');$('loginForm').classList.toggle('hidden',mode!=='login');}
 $('modeRegister').onclick=()=>setMode('register');$('modeLogin').onclick=()=>setMode('login');
-function errorText(e){const code=e?.code||'';const mapping={'auth/email-already-in-use':'ეს ელფოსტა უკვე რეგისტრირებულია. სცადე შესვლა.','auth/invalid-email':'ელფოსტის მისამართი არასწორია.','auth/weak-password':'აირჩიე უფრო ძლიერი პაროლი.','auth/invalid-credential':'ელფოსტა ან პაროლი არასწორია.','auth/too-many-requests':'ბევრი მცდელობაა. მოგვიანებით სცადე.','auth/network-request-failed':'ინტერნეტკავშირი გადაამოწმე.','permission-denied':'Firebase-ის წვდომის წესები შესამოწმებელია.','auth/unauthorized-domain':'Firebase Authentication → Settings → Authorized domains-ში დაამატე hexora-services.github.io.'};return mapping[code]||`ოპერაცია ვერ შესრულდა (${code||e.message||'უცნობი შეცდომა'}).`;}
+function errorText(e){const code=e?.code||'';const mapping={'auth/email-already-in-use':'ეს ელფოსტა უკვე რეგისტრირებულია. სცადე შესვლა.','auth/invalid-email':'ელფოსტის მისამართი არასწორია.','auth/weak-password':'აირჩიე უფრო ძლიერი პაროლი.','auth/invalid-credential':'ელფოსტა ან პაროლი არასწორია.','auth/too-many-requests':'ბევრი მცდელობაა. მოგვიანებით სცადე.','auth/network-request-failed':'ინტერნეტკავშირი გადაამოწმე.','permission-denied':'Firebase-ის წვდომის წესები შესამოწმებელია.','auth/unauthorized-domain':'Firebase Authentication → Settings → Authorized domains-ში დაამატე hexora-services.github.io.'};return mapping[code]||(e?.message && !code ? e.message : `ოპერაცია ვერ შესრულდა (${code||e.message||'უცნობი შეცდომა'}).`);}
+// Accept Georgian mobile numbers, canonical format = 9955XXXXXXXX (12 digits).
+function normalizePhone(value){
+ let digits=String(value||'').replace(/[\s\-()]/g,'');
+ if(digits.startsWith('+'))digits=digits.slice(1);
+ if(/^5[0-9]{8}$/.test(digits))digits='995'+digits;
+ else if(/^05[0-9]{8}$/.test(digits))digits='995'+digits.slice(1);
+ return /^9955[0-9]{8}$/.test(digits)?digits:null;
+}
+function phoneError(err){
+ const code=String(err?.code||'');
+ if(code==='permission-denied'||code==='failed-precondition'||code==='already-exists')
+   return 'ეს ტელეფონის ნომერი შესაძლოა უკვე გამოყენებულია ან Firebase-ის განახლებული წესები ჯერ არ არის გამოქვეყნებული. გადაამოწმე ნომერი.';
+ return errorText(err);
+}
+async function claimPhone(phone,uid,withAccount,worker){
+ const batch=sdk.writeBatch(firestore);
+ const accountRef=sdk.doc(firestore,'accounts',uid);
+ const claimRef=sdk.doc(firestore,'registeredPhones',phone);
+ if(withAccount)batch.set(accountRef,withAccount);
+ else batch.update(accountRef,{phone});
+ batch.set(claimRef,{uid,createdAt:sdk.serverTimestamp()});
+ if(worker&&withAccount){
+  batch.set(sdk.doc(firestore,'workerProfiles',uid),worker);
+ }
+ if(worker)batch.set(sdk.doc(firestore,'workerContacts',uid),{phone:'+'+phone,updatedAt:sdk.serverTimestamp()});
+ await batch.commit();
+}
+async function maybeAutoPublish(current,acc,p){
+ if(acc?.role!=='worker'||!acc.phone||!p||p.approved)return p;
+ try{
+  await current.reload();
+  if(!current.emailVerified)return p;
+  await current.getIdToken(true);
+  await sdk.updateDoc(sdk.doc(firestore,'workerProfiles',current.uid),{
+    approved:true,updatedAt:sdk.serverTimestamp()
+  });
+  return {...p,approved:true};
+ }catch(err){
+  console.warn('HEXORA automatic publication:',err?.code||err?.message);
+  msg('ელფოსტა დადასტურებულია, მაგრამ პროფილის ავტომატური გამოქვეყნება ვერ დასრულდა. შეამოწმე ნომრის რეგისტრაცია და Firebase-ის წესები.');
+  return p;
+ }
+}
 function withBusy(btn,task){const old=btn.textContent;btn.disabled=true;btn.textContent='გთხოვ, დაელოდე...';return Promise.resolve().then(task).catch(e=>msg(errorText(e))).finally(()=>{btn.disabled=false;btn.textContent=old;});}
-$('registerForm').addEventListener('submit',e=>{e.preventDefault();if(!configured)return msg('ჯერ Firebase უნდა დავაკავშიროთ.');withBusy($('registerBtn'),async()=>{clearMsg();const name=$('registerName').value.trim(),email=$('registerEmail').value.trim(),password=$('registerPassword').value,repeat=$('confirmPassword').value;if(name.length<2||name.length>60)return msg('სახელი 2–60 სიმბოლო უნდა იყოს.');if(password.length<8||password.length>128)return msg('პაროლი უნდა იყოს 8–128 სიმბოლო.');if(password!==repeat)return msg('პაროლები ერთმანეთს არ ემთხვევა.');const fee=Number($('registerFee').value);if(selectedRole==='worker'&&(!Number.isInteger(fee)||fee<1||fee>2000))return msg('ვიზიტის ფასი მიუთითე 1–2000 ₾.');registrationInProgress=true;try{const credential=await sdk.createUserWithEmailAndPassword(auth,email,password);user=credential.user;await sdk.updateProfile(user,{displayName:name});const data={displayName:name,role:selectedRole,createdAt:sdk.serverTimestamp()};await sdk.setDoc(sdk.doc(firestore,'accounts',user.uid),data);if(selectedRole==='worker')await sdk.setDoc(sdk.doc(firestore,'workerProfiles',user.uid),{displayName:name,city:$('registerCity').value,category:Number($('registerCategory').value),subcategory:$('registerSubcategory').value,visitFee:fee,online:false,approved:false,updatedAt:sdk.serverTimestamp()});await sdk.sendEmailVerification(user);msg('ანგარიში შეიქმნა! ელფოსტაზე გაიგზავნა დადასტურების წერილი.',true);await loadDashboard(user);}finally{registrationInProgress=false;}});});
+$('registerForm').addEventListener('submit',e=>{
+ e.preventDefault();if(!configured)return msg('ჯერ Firebase უნდა დავაკავშიროთ.');
+ withBusy($('registerBtn'),async()=>{
+  clearMsg();
+  const name=$('registerName').value.trim(),email=$('registerEmail').value.trim(),
+        password=$('registerPassword').value,repeat=$('confirmPassword').value,
+        phone=normalizePhone($('registerPhone').value);
+  if(name.length<2||name.length>60)return msg('სახელი 2–60 სიმბოლო უნდა იყოს.');
+  if(password.length<8||password.length>128)return msg('პაროლი უნდა იყოს 8–128 სიმბოლო.');
+  if(password!==repeat)return msg('პაროლები ერთმანეთს არ ემთხვევა.');
+  if(!phone)return msg('მიუთითე საქართველოს მობილურის სწორი ნომერი, მაგალითად 5XXXXXXXX.');
+  const fee=Number($('registerFee').value);
+  if(selectedRole==='worker'&&(!Number.isInteger(fee)||fee<1||fee>2000))return msg('ვიზიტის ფასი მიუთითე 1–2000 ₾.');
+  registrationInProgress=true;let newUser=null;
+  try{
+   const credentials=await sdk.createUserWithEmailAndPassword(auth,email,password);
+   newUser=credentials.user;user=newUser;
+   const data={displayName:name,role:selectedRole,phone,createdAt:sdk.serverTimestamp()};
+   const worker=selectedRole==='worker'?{
+      displayName:name,city:$('registerCity').value,
+      category:Number($('registerCategory').value),subcategory:$('registerSubcategory').value,
+      visitFee:fee,online:false,approved:false,updatedAt:sdk.serverTimestamp()
+   }:null;
+   try{
+     await claimPhone(phone,newUser.uid,data,worker);
+   }catch(err){
+     // Clean up a just-created Authentication user when the number is already claimed.
+     // Never leave an unusable account unless deletion itself fails.
+     try{await sdk.deleteUser(newUser);newUser=null;}catch(cleanupErr){
+       console.warn('HEXORA signup cleanup failed',cleanupErr?.code);
+       throw new Error('რეგისტრაცია მონაცემთა ბაზაში ვერ დასრულდა. ანგარიში შესაძლოა ნაწილობრივ შეიქმნა. დაუკავშირდი ადმინისტრატორს.');
+     }
+     throw new Error(phoneError(err));
+   }
+   await sdk.updateProfile(newUser,{displayName:name}).catch(()=>{});
+   try{
+     await sdk.sendEmailVerification(newUser);
+     msg('✅ ანგარიში შეიქმნა. გადაამოწმე ელფოსტა და შემდეგ დაბრუნდი HEXORA-ში. ხელოსნის პროფილი ავტომატურად გამოქვეყნდება.',true);
+   }catch(err){
+     msg('ანგარიში შეიქმნა, მაგრამ წერილი ვერ გაიგზავნა. დააჭირე „დადასტურების წერილის გაგზავნა“ ღილაკს.');
+   }
+   await loadDashboard(newUser);
+  }finally{registrationInProgress=false;}
+ });
+});
 $('loginForm').addEventListener('submit',e=>{e.preventDefault();if(!configured)return;withBusy($('loginBtn'),async()=>{clearMsg();await sdk.signInWithEmailAndPassword(auth,$('loginEmail').value.trim(),$('loginPassword').value);});});
 $('resetPassword').onclick=()=>{if(!configured)return;const email=$('loginEmail').value.trim();if(!email)return msg('ჯერ ჩაწერე ელფოსტა შესვლის ველში.');withBusy($('resetPassword'),async()=>{await sdk.sendPasswordResetEmail(auth,email);msg('თუ ანგარიში არსებობს, პაროლის აღდგენის წერილი გაიგზავნა.',true);});};
 
 // Email correction is on a dedicated page; link is native HTML for reliability.
 $('logout').onclick=()=>{sdk.signOut(auth).catch(e=>msg(errorText(e)));};
 $('sendVerification').onclick=()=>{withBusy($('sendVerification'),async()=>{await sdk.sendEmailVerification(auth.currentUser);msg('დადასტურების წერილი გაიგზავნა.',true);});};
-$('reloadVerification').onclick=()=>{withBusy($('reloadVerification'),async()=>{await auth.currentUser.reload();await loadDashboard(auth.currentUser);msg('დადასტურების სტატუსი განახლებულია.',true);});};
-async function loadDashboard(current){user=current;const snap=await sdk.getDoc(sdk.doc(firestore,'accounts',current.uid));if(!snap.exists())throw new Error('ანგარიშის ჩანაწერი ვერ მოიძებნა. თუ რეგისტრაცია შეწყდა, დაგვიკავშირდი მხარდაჭერასთან.');account=snap.data();$('loading').classList.add('hidden');$('anonymous').classList.add('hidden');$('signed').classList.remove('hidden');$('greeting').textContent='გამარჯობა, '+(account.displayName||current.displayName||'მომხმარებელო')+'!';$('identityEmail').textContent=current.email||'';$('rolePill').textContent=account.role==='worker'?'🧰 ხელოსანი':'👤 მომხმარებელი';$('emailVerify').classList.toggle('hidden',!!current.emailVerified);$('customerPanel').classList.toggle('hidden',account.role!=='customer');$('workerPanel').classList.toggle('hidden',account.role!=='worker');if(account.role==='worker'){const ps=await sdk.getDoc(sdk.doc(firestore,'workerProfiles',current.uid));if(ps.exists()){profile=ps.data();$('profileName').value=profile.displayName||'';$('profileCity').value=profile.city||cities[0];$('profileCategory').value=String(profile.category??0);setSub('profileCategory','profileSubcategory',profile.subcategory);$('profileFee').value=profile.visitFee??25;$('profileOnline').value=String(!!profile.online);$('approvalStatus').textContent=profile.approved?'✅ პროფილი დამტკიცებულია. სამუშაო რეჟიმის ჩართვა შეგიძლია.':'⏳ პროფილი შემოწმებას ელოდება. საჯარო სიაში ჯერ არ გამოჩნდება.'; }else{$('approvalStatus').textContent='პროფილის შექმნა ვერ დასრულდა. დაუკავშირდი ადმინისტრატორს.';}}}
+$('reloadVerification').onclick=()=>{withBusy($('reloadVerification'),async()=>{await auth.currentUser.reload();await auth.currentUser.getIdToken(true);await loadDashboard(auth.currentUser);msg('დადასტურების სტატუსი განახლებულია.',true);});};
+async function loadDashboard(current){user=current;const snap=await sdk.getDoc(sdk.doc(firestore,'accounts',current.uid));if(!snap.exists())throw new Error('ანგარიშის ჩანაწერი ვერ მოიძებნა. თუ რეგისტრაცია შეწყდა, დაგვიკავშირდი მხარდაჭერასთან.');account=snap.data();$('loading').classList.add('hidden');$('anonymous').classList.add('hidden');$('signed').classList.remove('hidden');$('greeting').textContent='გამარჯობა, '+(account.displayName||current.displayName||'მომხმარებელო')+'!';$('identityEmail').textContent=current.email||'';$('rolePill').textContent=account.role==='worker'?'🧰 ხელოსანი':'👤 მომხმარებელი';$('emailVerify').classList.toggle('hidden',!!current.emailVerified);$('customerPanel').classList.toggle('hidden',account.role!=='customer');$('workerPanel').classList.toggle('hidden',account.role!=='worker');$('phoneSetupPanel').classList.toggle('hidden',!!account.phone);if(account.role==='worker'){const ps=await sdk.getDoc(sdk.doc(firestore,'workerProfiles',current.uid));if(ps.exists()){profile=await maybeAutoPublish(current,account,ps.data());$('profileName').value=profile.displayName||'';$('profileCity').value=profile.city||cities[0];$('profileCategory').value=String(profile.category??0);setSub('profileCategory','profileSubcategory',profile.subcategory);$('profileFee').value=profile.visitFee??25;$('profileOnline').value=String(!!profile.online);$('approvalStatus').textContent=profile.approved?'✅ ელფოსტა დადასტურებულია და პროფილი გამოქვეყნებულია. კვალიფიკაცია შემოწმებული არ არის.':(!account.phone?'📱 პროფილის გასაჯაროებლად ზემოთ დაამატე მობილურის ნომერი.':(!current.emailVerified?'✉️ დაადასტურე ელფოსტა. შემდეგ ამ გვერდზე დაბრუნდი.':'⏳ პროფილი ჯერ არ გამოქვეყნებულა. დააჭირე დადასტურების სტატუსის განახლებას.')); }else{$('approvalStatus').textContent='პროფილის შექმნა ვერ დასრულდა. დაუკავშირდი ადმინისტრატორს.';}}}
+$('phoneLinkForm').addEventListener('submit',e=>{
+ e.preventDefault();if(!user||!account||account.phone)return;
+ withBusy($('saveLinkedPhone'),async()=>{
+  const phone=normalizePhone($('linkPhone').value);
+  if(!phone)return msg('მიუთითე საქართველოს მობილურის სწორი ნომერი, მაგალითად 5XXXXXXXX.');
+  const batch=sdk.writeBatch(firestore);
+  batch.update(sdk.doc(firestore,'accounts',user.uid),{phone});
+  batch.set(sdk.doc(firestore,'registeredPhones',phone),{uid:user.uid,createdAt:sdk.serverTimestamp()});
+  if(account.role==='worker')batch.set(sdk.doc(firestore,'workerContacts',user.uid),{phone:'+'+phone,updatedAt:sdk.serverTimestamp()});
+  try{await batch.commit()}catch(err){throw new Error(phoneError(err));}
+  account={...account,phone};$('phoneSetupPanel').classList.add('hidden');
+  await loadDashboard(user);
+  msg('✅ ტელეფონის ნომერი დაკავშირებულია. თუ ელფოსტა დადასტურებულია, ხელოსნის პროფილიც ავტომატურად გამოქვეყნდება.',true);
+ });
+});
 $('workerProfileForm').addEventListener('submit',e=>{e.preventDefault();if(!configured||!user||account?.role!=='worker'||!profile)return;withBusy($('profileSave'),async()=>{const fee=Number($('profileFee').value),name=$('profileName').value.trim();if(!Number.isInteger(fee)||fee<1||fee>2000)return msg('ვიზიტის ფასი უნდა იყოს 1–2000 ₾.');if(name.length<2||name.length>60)return msg('სახელი უნდა იყოს 2–60 სიმბოლო.');await sdk.updateDoc(sdk.doc(firestore,'workerProfiles',user.uid),{displayName:name,city:$('profileCity').value,category:Number($('profileCategory').value),subcategory:$('profileSubcategory').value,visitFee:fee,online:$('profileOnline').value==='true',updatedAt:sdk.serverTimestamp()});profile={...profile,displayName:name,city:$('profileCity').value,category:Number($('profileCategory').value),subcategory:$('profileSubcategory').value,visitFee:fee,online:$('profileOnline').value==='true'};msg('ხელოსნის პროფილი შენახულია.',true);});});
 async function init(){if(!configured){$('loading').classList.add('hidden');$('setup').hidden=false;$('anonymous').classList.remove('hidden');$('registerBtn').disabled=true;$('loginBtn').disabled=true;$('resetPassword').disabled=true;return;}try{const [appModule,authModule,fireModule]=await Promise.all([import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js')]);sdk={...authModule,...fireModule};const app=appModule.initializeApp(firebaseConfig);auth=authModule.getAuth(app);firestore=fireModule.getFirestore(app);authModule.onAuthStateChanged(auth,async(current)=>{if(registrationInProgress)return;clearMsg();$('loading').classList.add('hidden');if(current){try{await loadDashboard(current)}catch(e){$('signed').classList.add('hidden');$('anonymous').classList.remove('hidden');msg(errorText(e));}}else{user=null;account=null;profile=null;$('anonymous').classList.remove('hidden');$('signed').classList.add('hidden');}},e=>{$('loading').classList.add('hidden');msg(errorText(e))});}catch(e){$('loading').classList.add('hidden');msg('Firebase ვერ ჩაიტვირთა. გადაამოწმე ინტერნეტი და პროექტის პარამეტრები. '+errorText(e));}}
 init();

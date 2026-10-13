@@ -26,40 +26,79 @@ service cloud.firestore {
      && (d.phone == '' || d.phone.matches('^([+])?[0-9]{9,15}$'))
      && d.updatedAt == request.time;
   }
+  function phoneOK(phone) {
+    return phone is string && phone.matches('^9955[0-9]{8}$');
+  }
+  // Private one-number-to-one-account mapping. Atomic with account creation.
+  match /registeredPhones/{phone} {
+    allow get: if request.auth != null && resource.data.uid == request.auth.uid;
+    allow list: if false;
+    allow create: if request.auth != null
+      && phoneOK(phone)
+      && request.resource.data.keys().hasAll(['uid','createdAt'])
+      && request.resource.data.keys().hasOnly(['uid','createdAt'])
+      && request.resource.data.uid == request.auth.uid
+      && request.resource.data.createdAt == request.time
+      && getAfter(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.phone == phone;
+    allow update, delete: if false;
+  }
   match /accounts/{uid} {
     allow get: if self(uid);
     allow list: if false;
     allow create: if self(uid)
-     && request.resource.data.keys().hasAll(['displayName','role','createdAt'])
-     && request.resource.data.keys().hasOnly(['displayName','role','createdAt'])
+     && request.resource.data.keys().hasAll(['displayName','role','phone','createdAt'])
+     && request.resource.data.keys().hasOnly(['displayName','role','phone','createdAt'])
      && nameOK(request.resource.data.displayName)
      && request.resource.data.role in ['customer','worker']
+     && phoneOK(request.resource.data.phone)
+     && getAfter(/databases/$(database)/documents/registeredPhones/$(request.resource.data.phone)).data.uid == uid
      && request.resource.data.createdAt == request.time;
-    allow update, delete: if false;
+    // Existing/legacy users may link their first phone once, without changing role or name.
+    allow update: if self(uid) && !('phone' in resource.data)
+     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['phone'])
+     && phoneOK(request.resource.data.phone)
+     && getAfter(/databases/$(database)/documents/registeredPhones/$(request.resource.data.phone)).data.uid == uid;
+    allow delete: if false;
+  }
+  function workerCanPublish(uid) {
+    let acc = get(/databases/$(database)/documents/accounts/$(uid));
+    return acc.data.role == 'worker'
+      && ('phone' in acc.data)
+      && get(/databases/$(database)/documents/registeredPhones/$(acc.data.phone)).data.uid == uid;
   }
   match /workerProfiles/{uid} {
     allow get: if self(uid) || resource.data.approved == true;
     allow list: if resource.data.approved == true;
     allow create: if self(uid)
-     && exists(/databases/$(database)/documents/accounts/$(uid))
-     && get(/databases/$(database)/documents/accounts/$(uid)).data.role == 'worker'
+     && getAfter(/databases/$(database)/documents/accounts/$(uid)).data.role == 'worker'
      && validWorker(request.resource.data)
      && request.resource.data.approved == false
      && request.resource.data.online == false
      && request.resource.data.updatedAt == request.time;
     allow update: if self(uid)
      && validWorker(request.resource.data)
-     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
-       ['displayName','city','category','subcategory','visitFee','online','updatedAt','bio','experienceYears','photoURL','gallery'])
-     && request.resource.data.approved == resource.data.approved
-     && request.resource.data.updatedAt == request.time;
+     && request.resource.data.updatedAt == request.time
+     && (
+       // Normal edits cannot alter public-approval status.
+       (request.resource.data.approved == resource.data.approved
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+          ['displayName','city','category','subcategory','visitFee','online','updatedAt','bio','experienceYears','photoURL','gallery']))
+       ||
+       // One-time automatic publication after email verification AND phone registration.
+       (resource.data.approved == false && request.resource.data.approved == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approved','updatedAt'])
+        && request.auth.token.email_verified == true
+        && workerCanPublish(uid))
+     );
     allow delete: if false;
   }
   match /workerContacts/{uid} {
     allow get: if self(uid) || (request.auth != null && approvedWorker(uid));
     allow list: if false;
     allow create, update: if self(uid)
-      && workerExists(uid) && validContact(request.resource.data);
+      && getAfter(/databases/$(database)/documents/workerProfiles/$(uid)).data.category >= 0 && validContact(request.resource.data)
+      && (!('phone' in getAfter(/databases/$(database)/documents/accounts/$(uid)).data)
+          || request.resource.data.phone == '+' + getAfter(/databases/$(database)/documents/accounts/$(uid)).data.phone);
     allow delete: if false;
   }
   match /workerInteractions/{workerUid}/{kind}/{viewerUid} {

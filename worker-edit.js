@@ -76,10 +76,10 @@ async function init(){
        $('bio').value=profile.bio||'';
        $('experience').value=profile.experienceYears??0;
        const contact=await fSDK.getDoc(fSDK.doc(db,'workerContacts',uid));
-       $('phone').value=contact.exists()?contact.data().phone||'':'';
+       $('phone').value=acc.data().phone?('+'+acc.data().phone):(contact.exists()?contact.data().phone||'':'');$('phone').readOnly=!!acc.data().phone;$('phone').title=acc.data().phone?'ეს ნომერი რეგისტრაციისას დაფიქსირდა, მისი შეცვლა აქედან არ შეიძლება.':'';
        const pic=await fSDK.getDoc(fSDK.doc(db,'workerImages',uid));
        displayPhoto(pic.exists()?pic.data().dataUrl:null);
-       note(profile.approved?'✅ დამტკიცებული პროფილი. ფოტო საჯაროდ ჩანს.':'⏳ პროფილი დამტკიცებას ელოდება. ფოტო დამტკიცების შემდეგ გამოჩნდება.');
+       note(profile.approved?'✅ ელფოსტით დადასტურებული პროფილი საჯაროა. ფოტო ჩანს.':'⏳ პროფილის გამოსაქვეყნებლად დაადასტურე ელფოსტა და დაუკავშირე ნომერი HEXORA-ს ანგარიშში.');
        void loadStats();
      }catch(e){console.error(e);note('პროფილი ვერ ჩაიტვირთა. შეამოწმე ახალი Firestore Rules.',true);}
    });
