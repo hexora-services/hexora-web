@@ -90,6 +90,35 @@ service cloud.firestore {
       && validWorkerImage(request.resource.data);
     allow delete: if self(uid) && workerExists(uid);
   }
+  // Public reviews for approved workers. One verified customer = one review per worker.
+  // Ratings are user-submitted and do not assert a verified booking.
+  function validReview(d) {
+    return d.keys().hasAll(['rating','comment','createdAt','updatedAt'])
+      && d.keys().hasOnly(['rating','comment','createdAt','updatedAt'])
+      && d.rating is int && d.rating >= 1 && d.rating <= 5
+      && d.comment is string && d.comment.size() <= 300;
+  }
+  function customerReviewer(reviewerUid,workerUid) {
+    return self(reviewerUid)
+      && reviewerUid != workerUid
+      && request.auth.token.email_verified == true
+      && exists(/databases/$(database)/documents/accounts/$(reviewerUid))
+      && get(/databases/$(database)/documents/accounts/$(reviewerUid)).data.role == 'customer'
+      && approvedWorker(workerUid);
+  }
+  match /workerReviews/{workerUid}/items/{reviewerUid} {
+    allow get, list: if approvedWorker(workerUid);
+    allow create: if customerReviewer(reviewerUid,workerUid)
+      && validReview(request.resource.data)
+      && request.resource.data.createdAt == request.time
+      && request.resource.data.updatedAt == request.time;
+    allow update: if customerReviewer(reviewerUid,workerUid)
+      && validReview(request.resource.data)
+      && request.resource.data.createdAt == resource.data.createdAt
+      && request.resource.data.updatedAt == request.time
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating','comment','updatedAt']);
+    allow delete: if customerReviewer(reviewerUid,workerUid);
+  }
   match /{path=**} { allow read, write: if false; }
  }
 }
