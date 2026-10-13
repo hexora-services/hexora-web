@@ -154,6 +154,15 @@
 .plans-cta a:hover,.plans-cta a:focus-visible{background:#0d675e}
 .foot a{color:#fff;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:640px){.plans-cta{flex-direction:column;align-items:stretch;padding:17px;gap:14px}.plans-cta a{width:100%}}
+
+/* HEXORA: auto-hide the tall mobile navigation while reading content. */
+@media (max-width:640px) {
+  header.top { transition: transform .24s ease; }
+  header.top.hexora-header-hidden { transform: translateY(calc(-100% - 3px)); }
+}
+@media (max-width:640px) and (prefers-reduced-motion:reduce) {
+  header.top { transition: none; }
+}
 </style>
 </head>
 <body>
@@ -346,4 +355,50 @@ if (configured && accountLink) {
 }
 </script>
 <script type="module" src="real-workers.js"></script>
+
+<!-- Mobile UX: show the navigation near the top or when scrolling upward. -->
+<script>
+(function () {
+  'use strict';
+  const header = document.querySelector('header.top');
+  if (!header) return;
+  const mobile = window.matchMedia('(max-width:640px)');
+  let previous = Math.max(0, window.scrollY);
+  let anchor = previous;
+  let scheduled = false;
+  function show() { header.classList.remove('hexora-header-hidden'); }
+  function update() {
+    const current = Math.max(0, window.scrollY);
+    scheduled = false;
+    if (!mobile.matches || current < 90) {
+      show();
+      anchor = current;
+      previous = current;
+      return;
+    }
+    const delta = current - previous;
+    if (delta > 0 && current - anchor > 25) {
+      header.classList.add('hexora-header-hidden');
+      anchor = current;
+    } else if (delta < 0 && anchor - current > 25) {
+      show();
+      anchor = current;
+    }
+    previous = current;
+  }
+  window.addEventListener('scroll', function () {
+    if (!scheduled) {
+      scheduled = true;
+      window.requestAnimationFrame(update);
+    }
+  }, {passive: true});
+  window.addEventListener('resize', function () {
+    show();
+    previous = Math.max(0, window.scrollY);
+    anchor = previous;
+  }, {passive: true});
+  // Keep the navigation visible when a tab is selected.
+  header.querySelector('.nav')?.addEventListener('click', show);
+})();
+</script>
 </body></html>
