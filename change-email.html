@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ka">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#101f34">
+ <meta name="robots" content="noindex,nofollow">
+ <title>ელფოსტის შეცვლა | HEXORA</title>
+ <link rel="icon" href="favicon.svg" type="image/svg+xml">
+ <style>
+ :root{--navy:#101f34;--orange:#fa793e;--line:#dae5ed;--ink:#1b3145;--muted:#5a7284}
+ *{box-sizing:border-box}
+ body{margin:0;font:15px/1.65 system-ui,-apple-system,"Noto Sans Georgian",sans-serif;background:#f4f7fa;color:var(--ink)}
+ a{color:inherit;text-decoration:none}
+ button,input{font:inherit}
+ button{cursor:pointer}
+ header{background:var(--navy);color:#fff}
+ .wrap{width:min(680px,calc(100% - 30px));margin-inline:auto}
+ header .wrap{min-height:72px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+ .brand{font-weight:900;font-size:23px}.brand span{color:#ffa476}
+ .back{font-size:13px;padding:9px 12px;border:1px solid #5e7a93;border-radius:10px}
+ main{padding:28px 0 70px}
+ .card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:0 12px 30px #122d490a}
+ h1{font-size:clamp(24px,5vw,32px);line-height:1.3;margin:0 0 10px}
+ p{color:var(--muted);margin:0 0 16px}
+ .field{display:grid;gap:7px;margin:16px 0;font-weight:750;font-size:13px;color:#455d6e}
+ .field input{min-height:48px;border:1px solid #bfced8;padding:12px 13px;border-radius:11px;width:100%;background:#fff;color:#162f43}
+ .field input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #8dd8c7;outline-offset:2px}
+ .button{display:inline-flex;align-items:center;justify-content:center;border:0;background:var(--navy);color:#fff;padding:12px 16px;min-height:48px;border-radius:11px;font-weight:850;text-align:center}
+ .button:disabled{opacity:.55;cursor:wait}
+ .button.secondary{background:#e9f0f5;color:var(--navy)}
+ .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:20px}
+ .note{background:#f0f7fa;border-radius:12px;padding:14px 16px;color:#4b6473;margin:14px 0}
+ .notice{display:none;padding:13px 15px;border-radius:12px;margin:16px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+ .notice.show{display:block;background:#e7f7ef;color:#1f5d3f}
+ .notice.error{background:#fff0ec;color:#a03d2f}
+ [hidden]{display:none!important}
+ @media(max-width:560px){.card{padding:19px}.actions .button{width:100%}}
+ </style>
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="index.html">HEX<span>ORA</span></a><a class="back" href="account.html">← ჩემი ანგარიში</a></div></header>
+<main class="wrap"><section class="card">
+ <h1>✉️ ელფოსტის შეცვლა</h1>
+ <p>თუ რეგისტრაციისას მისამართი შეცდომით მიუთითე, აქ შეგიძლია შეასწორო. შენი ანგარიში, ხელოსნის პროფილი და მონაცემები შენარჩუნდება.</p>
+ <p id="loading" class="note">ანგარიში იტვირთება…</p>
+ <div id="signedout" hidden><div class="note">ელფოსტის შესაცვლელად ჯერ შედი იმ ანგარიშში, რომლის მისამართის გასწორებაც გინდა.</div><a class="button" href="account.html">ანგარიშში შესვლა →</a></div>
+ <div id="signedin" hidden>
+  <div class="note">ახლანდელი მისამართი: <strong id="currentEmail">—</strong></div>
+  <form id="emailForm">
+   <label class="field">სწორი ელფოსტის მისამართი
+    <input type="email" id="newEmail" autocomplete="email" inputmode="email" maxlength="254" placeholder="name@example.com" required>
+   </label>
+   <label class="field">ამ HEXORA ანგარიშის მიმდინარე პაროლი
+    <input type="password" id="password" autocomplete="current-password" required>
+   </label>
+   <div class="actions"><button class="button" type="submit" id="submit">დადასტურების წერილის გაგზავნა</button><a class="button secondary" href="account.html">უკან</a></div>
+  </form>
+  <p style="font-size:13px;margin-top:18px">ახალი ელფოსტა შეიცვლება მხოლოდ მასზე მოსული ბმულის დადასტურების შემდეგ. მანამდე ძველი მისამართით შედი ანგარიშში.</p>
+  <div class="actions"><button class="button secondary" type="button" id="refresh">დადასტურების შემდეგ სტატუსის განახლება</button></div>
+ </div>
+ <div id="notice" class="notice" role="status" aria-live="polite"></div>
+ </section></main>
+<script type="module" src="change-email.js?v=1"></script>
+</body>
+</html>

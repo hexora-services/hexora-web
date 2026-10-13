@@ -30,16 +30,9 @@
 
 <div class="email-change-box" id="emailChangeBox">
  <h3>✉️ ელფოსტის მისამართი</h3>
- <p>თუ რეგისტრაციისას ელფოსტა შეცდომით ჩაწერე, შეგიძლია აქ შეცვალო. შენი ანგარიში და ხელოსნის პროფილი შენარჩუნდება.</p>
- <button type="button" class="button light" id="toggleEmailChange" aria-expanded="false" aria-controls="changeEmailForm">ელფოსტის შეცვლა</button>
- <form id="changeEmailForm" class="hidden" autocomplete="on">
-  <label class="field">სწორი, ახალი ელფოსტა<input id="newAccountEmail" type="email" autocomplete="email" inputmode="email" maxlength="254" placeholder="name@example.com" required></label>
-  <label class="field">მიმდინარე პაროლი (უსაფრთხოებისათვის)<input id="confirmEmailPassword" type="password" autocomplete="current-password" required></label>
-  <p>ახალ მისამართზე გამოგეგზავნება ბმული. <strong>ელფოსტა შეიცვლება მხოლოდ ბმულის დადასტურების შემდეგ.</strong> მანამდე შესასვლელად ძველი მისამართი გამოიყენე.</p>
-  <div class="actions"><button type="submit" class="button dark" id="saveNewEmail">დადასტურების ბმულის გაგზავნა</button><button type="button" class="button light" id="cancelEmailChange">გაუქმება</button></div>
- </form>
- <div id="emailChangeResult" class="email-change-result" role="status" aria-live="polite"></div>
+ <p>თუ რეგისტრაციისას ელფოსტა შეცდომით ჩაწერე, გახსენი ცალკე გვერდი და მიუთითე სწორი მისამართი. შენი ანგარიში და ხელოსნის პროფილი შენარჩუნდება.</p>
+ <a class="button light" href="change-email.html" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">ელფოსტის შეცვლა →</a>
 </div>
 <div id="customerPanel" class="hidden"><div class="box good">მომხმარებლის ანგარიში შექმნილია. ხელოსნების კატალოგი ხელმისაწვდომია; GPS და რეალური შეკვეთები დაემატება შემდეგ ეტაპებზე.</div><a class="button dark" style="display:inline-flex;align-items:center" href="index.html">მომსახურებების ნახვა →</a></div>
 <div id="workerPanel" class="hidden"><div id="approvalStatus" class="box warn"></div><div class="box good"><strong>🛠️ ჩემი პროფესიონალური პროფილი</strong><p>დაამატე გამოცდილება, ტელეფონი და სამუშაოების ფოტოები; იხილე პროფილის ნახვების სტატისტიკაც.</p><a class="button dark" style="display:inline-flex;align-items:center" href="worker-edit.html">პროფილის გაფორმება და ფოტოები →</a></div><h3>ჩემი ხელოსნის პროფილი</h3><form id="workerProfileForm"><div class="form-grid"><label class="field full">საჯარო სახელი<input id="profileName" maxlength="60" required></label><label class="field">ქალაქი<select id="profileCity"></select></label><label class="field">მომსახურება<select id="profileCategory"></select></label><label class="field full">ქვეკატეგორია<select id="profileSubcategory"></select></label><label class="field full">ვიზიტის საფასური (₾)<input id="profileFee" required min="1" max="2000" step="1" type="number" inputmode="numeric"></label><label class="field full"><span>სამუშაო რეჟიმი</span><select id="profileOnline"><option value="false">ოფლაინ — გამოძახებებს არ ვიღებ</option><option value="true">ონლაინ — მზად ვარ მუშაობისთვის</option></select></label></div><div class="actions"><button class="button" id="profileSave" type="submit">პროფილის შენახვა</button></div></form><p class="privacy">ონლაინ სტატუსი რეალურ GPS ტრეკინგს ჯერ არ ნიშნავს. ვიზიტის საფასურს შენ თავად განსაზღვრავ.</p></div>
-</section></main><footer>HEXORA V4 • რეალური რეგისტრაციის კოდი • GPS და გადახდები ჯერ არ არის ჩართული</footer><script type="module" src="account.js"></script></body></html>
+</section></main><footer>HEXORA V4 • რეალური რეგისტრაციის კოდი • GPS და გადახდები ჯერ არ არის ჩართული</footer><script type="module" src="account.js?v=2"></script></body></html>
